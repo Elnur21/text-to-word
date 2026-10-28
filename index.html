@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#f5f4ef">
+    <title>Yazıdan Word-a — sənəd hazırlayıcı</title>
+    <style>
+        :root {
+            color-scheme: light;
+            --ink: #17241f;
+            --muted: #718078;
+            --paper: #fffefa;
+            --canvas: #f5f4ef;
+            --line: #e5e8e2;
+            --green: #2f674f;
+            --green-dark: #24543f;
+            --green-pale: #eaf2eb;
+            --shadow: 0 18px 48px rgba(27, 43, 34, .08);
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            min-width: 320px;
+            min-height: 100vh;
+            margin: 0;
+            background: var(--canvas);
+            color: var(--ink);
+            font-family: Inter, "Segoe UI", Arial, sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        button, textarea, input { font: inherit; }
+        button { cursor: pointer; }
+
+        .topbar {
+            height: 74px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 6.1%;
+            border-bottom: 1px solid var(--line);
+            background: rgba(255, 254, 250, .85);
+        }
+
+        .brand { display: flex; align-items: center; gap: 12px; }
+        .brand-mark {
+            width: 36px;
+            height: 36px;
+            display: grid;
+            place-items: center;
+            border-radius: 11px;
+            background: var(--green);
+            color: white;
+        }
+        .brand-mark svg { width: 19px; height: 19px; }
+        .brand-name { font-size: 15px; font-weight: 720; letter-spacing: -.3px; }
+        .brand-caption { margin-top: 2px; color: var(--muted); font-size: 11px; }
+        .top-note { color: var(--muted); font-size: 12px; }
+        .top-note span { color: var(--green); font-weight: 700; }
+
+        main { width: min(1240px, 88%); margin: 0 auto; padding: 50px 0 68px; }
+        .intro { margin-bottom: 30px; }
+        .eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--green);
+            font-size: 11px;
+            font-weight: 750;
+            letter-spacing: 1.15px;
+            text-transform: uppercase;
+        }
+        .eyebrow::before { width: 19px; height: 1px; background: #87a592; content: ""; }
+        h1 {
+            margin: 13px 0 9px;
+            font-family: Georgia, "Times New Roman", serif;
+            font-size: clamp(32px, 4vw, 46px);
+            font-weight: 500;
+            letter-spacing: -1.5px;
+            line-height: 1.12;
+        }
+        .intro p { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.65; }
+
+        .workspace {
+            min-height: 610px;
+            display: grid;
+            grid-template-columns: minmax(0, .92fr) minmax(0, 1.08fr);
+            overflow: hidden;
+            border: 1px solid #e8eae4;
+            border-radius: 16px;
+            background: var(--paper);
+            box-shadow: var(--shadow);
+        }
+        .editor-panel { min-width: 0; display: flex; flex-direction: column; border-right: 1px solid var(--line); }
+        .panel-heading {
+            min-height: 73px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 25px;
+            border-bottom: 1px solid var(--line);
+        }
+        .panel-title { font-size: 13px; font-weight: 720; }
+        .panel-subtitle { margin-top: 4px; color: var(--muted); font-size: 11px; }
+        .live-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 9px;
+            border: 1px solid #e2eee4;
+            border-radius: 20px;
+            background: #f5faf5;
+            color: var(--green);
+            font-size: 10px;
+            font-weight: 650;
+        }
+        .live-badge::before { width: 6px; height: 6px; border-radius: 50%; background: #5d9b70; content: ""; }
+        .editor-body { padding: 20px 24px 18px; }
+        .field-label {
+            display: block;
+            margin-bottom: 8px;
+            color: #536159;
+            font-size: 11px;
+            font-weight: 700;
+        }
+        .filename-wrap { position: relative; margin-bottom: 19px; }
+        .filename-wrap input {
+            width: 100%;
+            height: 41px;
+            padding: 0 57px 0 12px;
+            outline: none;
+            border: 1px solid var(--line);
+            border-radius: 7px;
+            background: #fff;
+            color: var(--ink);
+            font-size: 12px;
+            transition: border-color .2s, box-shadow .2s;
+        }
+        .filename-wrap input:focus, textarea:focus { border-color: #84a18f; box-shadow: 0 0 0 3px rgba(47, 103, 79, .09); }
+        .file-extension { position: absolute; top: 13px; right: 12px; color: #9aa39d; font-size: 11px; }
+        textarea {
+            width: 100%;
+            height: 330px;
+            resize: vertical;
+            padding: 14px;
+            outline: none;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            background: #fcfcfa;
+            color: #39453e;
+            font-family: "Cascadia Code", Consolas, monospace;
+            font-size: 11.5px;
+            line-height: 1.75;
+            tab-size: 2;
+            transition: border-color .2s, box-shadow .2s;
+        }
+        .format-help { margin-top: 10px; color: #8a948d; font-size: 10px; line-height: 1.65; }
+        .format-help code {
+            padding: 2px 4px;
+            border-radius: 3px;
+            background: #f0f2ed;
+            color: #4b5c51;
+            font-family: inherit;
+        }
+        .document-option {
+            display: flex;
+            align-items: flex-start;
+            gap: 9px;
+            margin-top: 16px;
+            padding: 11px 12px;
+            border: 1px solid var(--line);
+            border-radius: 7px;
+            background: #fff;
+            cursor: pointer;
+        }
+        .document-option input {
+            width: 14px;
+            height: 14px;
+            flex: 0 0 auto;
+            margin: 1px 0 0;
+            accent-color: var(--green);
+        }
+        .option-title { color: #39453e; font-size: 11px; font-weight: 650; }
+        .option-description { margin-top: 3px; color: #87918a; font-size: 10px; line-height: 1.5; }
+        .editor-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-top: auto;
+            padding: 15px 24px 19px;
+        }
+        .word-count { color: #87918a; font-size: 10px; }
+        .download-button {
+            min-height: 42px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 9px;
+            padding: 0 16px;
+            border: 0;
+            border-radius: 7px;
+            background: var(--green);
+            color: #fff;
+            font-size: 11px;
+            font-weight: 700;
+            transition: background .2s, transform .2s;
+        }
+        .download-button:hover { transform: translateY(-1px); background: var(--green-dark); }
+        .download-button:focus-visible, .sample-button:focus-visible { outline: 3px solid #9ab9a4; outline-offset: 3px; }
+        .download-button svg { width: 15px; height: 15px; }
+
+        .preview-panel { min-width: 0; display: flex; flex-direction: column; background: #fafaf7; }
+        .preview-toolbar { min-height: 73px; display: flex; align-items: center; justify-content: space-between; padding: 0 25px; border-bottom: 1px solid var(--line); }
+        .preview-label { color: var(--muted); font-size: 10px; font-weight: 650; letter-spacing: .55px; text-transform: uppercase; }
+        .page-indicator { color: #a0a9a2; font-size: 10px; }
+        .page-area { flex: 1; display: flex; justify-content: center; padding: 26px 28px 30px; }
+        .document {
+            width: 100%;
+            max-width: 430px;
+            min-height: 490px;
+            align-self: flex-start;
+            padding: 34px 32px;
+            background: white;
+            box-shadow: 0 3px 14px rgba(29, 42, 34, .09);
+            color: #202722;
+            font-family: Georgia, "Times New Roman", serif;
+            font-size: 12px;
+            line-height: 1.8;
+            overflow-wrap: anywhere;
+        }
+        .document h1 { margin: 0 0 12px; font-size: 21px; font-weight: 700; letter-spacing: -.35px; line-height: 1.3; }
+        .document h2 { margin: 17px 0 7px; font-size: 16px; font-weight: 700; line-height: 1.35; }
+        .document h3 { margin: 14px 0 6px; font-size: 13px; font-weight: 700; line-height: 1.4; }
+        .document p { margin: 0 0 8px; }
+        .document ul { margin: 3px 0 9px; padding-left: 21px; }
+        .document li { margin-bottom: 5px; padding-left: 2px; }
+        .document.compact-spacing h1 { margin-bottom: 0; }
+        .document.compact-spacing h2 { margin-top: 6px; margin-bottom: 0; }
+        .document.compact-spacing h3 { margin-top: 5px; margin-bottom: 0; }
+        .document.compact-spacing p { margin-bottom: 0; }
+        .document.compact-spacing ul { margin-top: 0; margin-bottom: 0; }
+        .document.compact-spacing li { margin-bottom: 0; }
+        .document strong { font-weight: 700; }
+        .document em { font-style: italic; }
+        .empty-preview { color: #a2aaa4; font-family: "Segoe UI", Arial, sans-serif; font-size: 11px; text-align: center; }
+        .sample-row { display: flex; align-items: center; gap: 9px; }
+        .sample-button { padding: 5px 0; border: 0; background: transparent; color: var(--green); font-size: 10px; font-weight: 700; }
+        .sample-button:hover { color: var(--green-dark); text-decoration: underline; }
+        .toast {
+            position: fixed;
+            right: 24px;
+            bottom: 24px;
+            z-index: 2;
+            max-width: min(360px, calc(100vw - 32px));
+            padding: 12px 16px;
+            transform: translateY(12px);
+            border-radius: 8px;
+            background: #243b2e;
+            box-shadow: 0 8px 25px rgba(24, 42, 31, .2);
+            color: white;
+            font-size: 12px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity .2s, transform .2s;
+        }
+        .toast.show { transform: translateY(0); opacity: 1; }
+
+        @media (max-width: 850px) {
+            main { width: min(680px, 90%); padding-top: 38px; }
+            .workspace { grid-template-columns: 1fr; }
+            .editor-panel { border-right: 0; border-bottom: 1px solid var(--line); }
+            textarea { height: 280px; }
+            .document { max-width: 500px; }
+        }
+        @media (max-width: 520px) {
+            .topbar { height: 64px; padding: 0 5%; }
+            .top-note { display: none; }
+            main { width: 92%; padding: 32px 0 40px; }
+            .intro { margin-bottom: 22px; }
+            h1 { font-size: 34px; }
+            .panel-heading, .preview-toolbar { min-height: 64px; padding: 0 17px; }
+            .editor-body { padding: 17px; }
+            .editor-footer { padding: 13px 17px 17px; }
+            .page-area { padding: 18px 12px 22px; }
+            .document { min-height: 410px; padding: 34px 27px; }
+            .download-button { padding: 0 12px; font-size: 10px; }
+        }
+    </style>
+</head>
+<body>
+    <header class="topbar">
+        <div class="brand">
+            <div class="brand-mark" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h8"/></svg>
+            </div>
+            <div>
+                <div class="brand-name">Yazıdan Word-a</div>
+                <div class="brand-caption">Sadə mətndən səliqəli sənədə</div>
+            </div>
+        </div>
+        <div class="top-note"><span>100% pulsuz</span> · Məlumatlarınız cihazınızda qalır</div>
+    </header>
+
+    <main>
+        <section class="intro">
+            <div class="eyebrow">Onlayn sənəd redaktoru</div>
+            <h1>Mətninizi sənədə çevirin.</h1>
+            <p>Markdown formatında yazın, görünüşə nəzər salın və hazır Word sənədini endirin.</p>
+        </section>
+
+        <section class="workspace" aria-label="Mətn redaktoru və sənəd önbaxışı">
+            <div class="editor-panel">
+                <div class="panel-heading">
+                    <div>
+                        <div class="panel-title">Mətniniz</div>
+                        <div class="panel-subtitle">Məzmunu daxil edin və ya redaktə edin</div>
+                    </div>
+                    <div class="live-badge">Canlı önbaxış</div>
+                </div>
+                <div class="editor-body">
+                    <label class="field-label" for="filename">Sənədin adı</label>
+                    <div class="filename-wrap">
+                        <input id="filename" type="text" value="Biznes-sigortasinin-novleri" autocomplete="off" aria-label="Endiriləcək sənədin adı">
+                        <span class="file-extension">.docx</span>
+                    </div>
+                    <label class="field-label" for="source">Mətn və formatlama</label>
+                    <textarea id="source" spellcheck="false" aria-label="Markdown formatında mətn">### Mühazirə 2. Biznes sığortasının növləri
+
+### 2.1. Sığortanın növləri və həyata keçirilmə formaları
+
+Sığorta iki böyük qrupa bölünür: həyat sığortası və qeyri-həyat sığortası. Həyat sığortası şəxsin ölümü, sağlamlığını və əmək qabiliyyətini itirməsi, qocalıq və əlillik halları ilə bağlı maliyyə təminatı yaradır.
+
+Həyat sığortasının əsas növləri:
+
+* Həyatın ölüm halından sığortası — sığortalı müqavilənin qüvvədə olduğu müddətdə vəfat etdikdə, müqavilədə göstərilən sığorta məbləğinin faydalanan şəxsə ödənilməsini nəzərdə tutur.
+
+* Həyatın yaşam sığortası — sığortalının müqavilə müddətinin sonunadək yaşaması və ya həmin müddətdə vəfat etməsi hallarını əhatə edir.</textarea>
+                    <label class="document-option" for="remove-blank-lines">
+                        <input id="remove-blank-lines" type="checkbox" checked>
+                        <span>
+                            <span class="option-title">Abzaslar arasındakı əlavə boşluğu sil</span>
+                            <span class="option-description">Seçildikdə, abzaslar arasında əlavə boş sətir saxlanmır.</span>
+                        </span>
+                    </label>
+                    <div class="format-help">
+                        Formatlama: <code>### Başlıq</code> · <code>* Siyahı elementi</code> · <code>**qalın**</code> · <code>*kursiv*</code>
+                    </div>
+                </div>
+                <div class="editor-footer">
+                    <div class="sample-row">
+                        <span class="word-count" id="word-count" aria-live="polite">0 söz</span>
+                        <button class="sample-button" id="sample-button" type="button">Nümunəni yüklə</button>
+                    </div>
+                    <button class="download-button" id="download" type="button">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5M12 15V3"/></svg>
+                        Word sənədini endir
+                    </button>
+                </div>
+            </div>
+
+            <div class="preview-panel">
+                <div class="preview-toolbar">
+                    <div class="preview-label">Sənədin önbaxışı</div>
+                    <div class="page-indicator">A4 · Portret</div>
+                </div>
+                <div class="page-area">
+                    <article class="document" id="preview" aria-label="Formatlanmış sənəd önbaxışı"></article>
+                </div>
+            </div>
+        </section>
+    </main>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <script>
+        "use strict";
+
+        const source = document.getElementById("source");
+        const preview = document.getElementById("preview");
+        const filename = document.getElementById("filename");
+        const wordCount = document.getElementById("word-count");
+        const removeBlankLines = document.getElementById("remove-blank-lines");
+        const toast = document.getElementById("toast");
+        let toastTimer;
+
+        function escapeHtml(text) {
+            return text.replace(/[&<>"']/g, function (character) {
+                return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[character];
+            });
+        }
+
+        function inlineMarkup(text) {
+            return escapeHtml(text)
+                .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+                .replace(/__(.+?)__/g, "<strong>$1</strong>")
+                .replace(/(?<!\*)\*([^*\n]+)\*(?!\*)/g, "<em>$1</em>")
+                .replace(/(?<!_)_([^_\n]+)_(?!_)/g, "<em>$1</em>");
+        }
+
+        function parseMarkup(text) {
+            const lines = text.replace(/\r\n?/g, "\n").split("\n");
+            const blocks = [];
+            let paragraph = [];
+            let listItems = [];
+
+            function flushParagraph() {
+                if (paragraph.length) {
+                    blocks.push("<p>" + inlineMarkup(paragraph.join(" ")) + "</p>");
+                    paragraph = [];
+                }
+            }
+            function flushList() {
+                if (listItems.length) {
+                    blocks.push("<ul>" + listItems.map(function (item) {
+                        return "<li>" + inlineMarkup(item) + "</li>";
+                    }).join("") + "</ul>");
+                    listItems = [];
+                }
+            }
+
+            lines.forEach(function (line) {
+                const heading = line.match(/^(#{1,3})\s+(.+?)\s*#*\s*$/);
+                const bullet = line.match(/^\s*[-*+]\s+(.+)$/);
+                if (!line.trim()) {
+                    flushParagraph();
+                    flushList();
+                } else if (heading) {
+                    flushParagraph();
+                    flushList();
+                    const level = Math.min(heading[1].length, 3);
+                    blocks.push("<h" + level + ">" + inlineMarkup(heading[2]) + "</h" + level + ">");
+                } else if (bullet) {
+                    flushParagraph();
+                    listItems.push(bullet[1]);
+                } else {
+                    flushList();
+                    paragraph.push(line.trim());
+                }
+            });
+            flushParagraph();
+            flushList();
+            return blocks.join("") || '<p class="empty-preview">Mətn yazmağa başlayın — sənədiniz burada görünəcək.</p>';
+        }
+
+        function updatePreview() {
+            preview.innerHTML = parseMarkup(source.value);
+            preview.classList.toggle("compact-spacing", removeBlankLines.checked);
+            const count = source.value.trim() ? source.value.trim().split(/\s+/).length : 0;
+            wordCount.textContent = count + " söz";
+        }
+
+        function xmlEscape(text) {
+            return text.replace(/[&<>"']/g, function (character) {
+                return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&apos;" }[character];
+            });
+        }
+
+        function paragraphXml(text, options) {
+            const settings = options || {};
+            const runs = [];
+            const pattern = /(\*\*|__)(.+?)\1|(?<!\*)\*([^*\n]+)\*(?!\*)|(?<!_)_([^_\n]+)_(?!_)/g;
+            let position = 0;
+            let match;
+            while ((match = pattern.exec(text)) !== null) {
+                if (match.index > position) {
+                    runs.push(runXml(text.slice(position, match.index), false, false));
+                }
+                const strong = Boolean(match[2]);
+                const value = match[2] || match[3] || match[4];
+                runs.push(runXml(value, strong, !strong));
+                position = pattern.lastIndex;
+            }
+            if (position < text.length || runs.length === 0) {
+                runs.push(runXml(text.slice(position), false, false));
+            }
+
+            let pPr = "";
+            if (settings.style) {
+                const headingLevel = Number(settings.style.slice(-1));
+                const before = settings.compactSpacing ? [0, 120, 100, 80][headingLevel] : [0, 300, 260, 220][headingLevel];
+                const after = settings.compactSpacing ? 0 : [0, 160, 140, 120][headingLevel];
+                pPr = '<w:pPr><w:pStyle w:val="' + settings.style + '"/><w:spacing w:before="' + before + '" w:after="' + after + '"/></w:pPr>';
+            } else if (settings.bullet) {
+                pPr = '<w:pPr><w:ind w:left="720" w:hanging="360"/><w:spacing w:after="' + (settings.compactSpacing ? 0 : 120) + '"/></w:pPr>';
+                runs.unshift('<w:r><w:rPr><w:rFonts w:ascii="Arial" w:hAnsi="Arial"/><w:color w:val="2F674F"/></w:rPr><w:t xml:space="preserve">•  </w:t></w:r>');
+            } else {
+                pPr = '<w:pPr><w:spacing w:after="' + (settings.compactSpacing ? 0 : 180) + '" w:line="360" w:lineRule="auto"/></w:pPr>';
+            }
+            return "<w:p>" + pPr + runs.join("") + "</w:p>";
+        }
+
+        function runXml(text, bold, italic) {
+            let properties = '<w:rFonts w:ascii="Arial" w:hAnsi="Arial" w:eastAsia="Arial"/><w:sz w:val="22"/><w:szCs w:val="22"/>';
+            if (bold) properties += "<w:b/>";
+            if (italic) properties += "<w:i/>";
+            return '<w:r><w:rPr>' + properties + '</w:rPr><w:t xml:space="preserve">' + xmlEscape(text) + "</w:t></w:r>";
+        }
+
+        function markdownToDocumentXml(text, compactSpacing) {
+            const lines = text.replace(/\r\n?/g, "\n").split("\n");
+            const paragraphs = [];
+            let paragraph = [];
+            function flushParagraph() {
+                if (paragraph.length) {
+                    paragraphs.push(paragraphXml(paragraph.join(" "), { compactSpacing: compactSpacing }));
+                    paragraph = [];
+                }
+            }
+            lines.forEach(function (line) {
+                const heading = line.match(/^(#{1,3})\s+(.+?)\s*#*\s*$/);
+                const bullet = line.match(/^\s*[-*+]\s+(.+)$/);
+                if (!line.trim()) {
+                    flushParagraph();
+                } else if (heading) {
+                    flushParagraph();
+                    const level = Math.min(heading[1].length, 3);
+                    paragraphs.push(paragraphXml(heading[2], { style: "Heading" + level, compactSpacing: compactSpacing }));
+                } else if (bullet) {
+                    flushParagraph();
+                    paragraphs.push(paragraphXml(bullet[1], { bullet: true, compactSpacing: compactSpacing }));
+                } else {
+                    paragraph.push(line.trim());
+                }
+            });
+            flushParagraph();
+            return paragraphs.join("");
+        }
+
+        const crcTable = (function () {
+            const table = new Uint32Array(256);
+            for (let n = 0; n < 256; n++) {
+                let value = n;
+                for (let bit = 0; bit < 8; bit++) value = value & 1 ? 0xEDB88320 ^ (value >>> 1) : value >>> 1;
+                table[n] = value >>> 0;
+            }
+            return table;
+        }());
+
+        function crc32(bytes) {
+            let crc = 0xFFFFFFFF;
+            for (let i = 0; i < bytes.length; i++) crc = crcTable[(crc ^ bytes[i]) & 0xFF] ^ (crc >>> 8);
+            return (crc ^ 0xFFFFFFFF) >>> 0;
+        }
+
+        function createZip(files) {
+            const encoder = new TextEncoder();
+            const localParts = [];
+            const centralParts = [];
+            let offset = 0;
+
+            function write16(view, position, value) { view.setUint16(position, value, true); }
+            function write32(view, position, value) { view.setUint32(position, value >>> 0, true); }
+
+            files.forEach(function (file) {
+                const name = encoder.encode(file.name);
+                const data = typeof file.data === "string" ? encoder.encode(file.data) : file.data;
+                const crc = crc32(data);
+                const local = new Uint8Array(30 + name.length);
+                const localView = new DataView(local.buffer);
+                write32(localView, 0, 0x04034B50);
+                write16(localView, 4, 20);
+                write16(localView, 6, 0x0800);
+                write16(localView, 8, 0);
+                write16(localView, 10, 0);
+                write16(localView, 12, 0);
+                write32(localView, 14, crc);
+                write32(localView, 18, data.length);
+                write32(localView, 22, data.length);
+                write16(localView, 26, name.length);
+                write16(localView, 28, 0);
+                local.set(name, 30);
+                localParts.push(local, data);
+
+                const central = new Uint8Array(46 + name.length);
+                const centralView = new DataView(central.buffer);
+                write32(centralView, 0, 0x02014B50);
+                write16(centralView, 4, 20);
+                write16(centralView, 6, 20);
+                write16(centralView, 8, 0x0800);
+                write16(centralView, 10, 0);
+                write16(centralView, 12, 0);
+                write16(centralView, 14, 0);
+                write32(centralView, 16, crc);
+                write32(centralView, 20, data.length);
+                write32(centralView, 24, data.length);
+                write16(centralView, 28, name.length);
+                write16(centralView, 30, 0);
+                write16(centralView, 32, 0);
+                write16(centralView, 34, 0);
+                write16(centralView, 36, 0);
+                write32(centralView, 38, 0);
+                write32(centralView, 42, offset);
+                central.set(name, 46);
+                centralParts.push(central);
+                offset += local.length + data.length;
+            });
+
+            const centralSize = centralParts.reduce(function (total, part) { return total + part.length; }, 0);
+            const end = new Uint8Array(22);
+            const endView = new DataView(end.buffer);
+            write32(endView, 0, 0x06054B50);
+            write16(endView, 4, 0);
+            write16(endView, 6, 0);
+            write16(endView, 8, files.length);
+            write16(endView, 10, files.length);
+            write32(endView, 12, centralSize);
+            write32(endView, 16, offset);
+            write16(endView, 20, 0);
+            return new Blob(localParts.concat(centralParts, [end]), { type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" });
+        }
+
+        function createDocx(text, compactSpacing) {
+            const contentTypes = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+                '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">' +
+                '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>' +
+                '<Default Extension="xml" ContentType="application/xml"/>' +
+                '<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>' +
+                '<Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/>' +
+                '</Types>';
+            const relationships = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+                '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+                '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>' +
+                '</Relationships>';
+            const documentRelationships = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+                '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+                '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>' +
+                '</Relationships>';
+            const styles = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+                '<w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">' +
+                '<w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="Arial" w:hAnsi="Arial" w:eastAsia="Arial"/><w:sz w:val="22"/></w:rPr></w:rPrDefault>' +
+                '<w:pPrDefault><w:pPr><w:spacing w:after="180" w:line="360" w:lineRule="auto"/></w:pPr></w:pPrDefault></w:docDefaults>' +
+                '<w:style w:type="paragraph" w:styleId="Normal"><w:name w:val="Normal"/><w:qFormat/><w:rPr><w:rFonts w:ascii="Arial" w:hAnsi="Arial"/><w:sz w:val="22"/></w:rPr></w:style>' +
+                '<w:style w:type="paragraph" w:styleId="Heading1"><w:name w:val="heading 1"/><w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:qFormat/><w:pPr><w:keepNext/><w:spacing w:before="300" w:after="160"/></w:pPr><w:rPr><w:b/><w:color w:val="244A38"/><w:sz w:val="34"/></w:rPr></w:style>' +
+                '<w:style w:type="paragraph" w:styleId="Heading2"><w:name w:val="heading 2"/><w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:qFormat/><w:pPr><w:keepNext/><w:spacing w:before="260" w:after="140"/></w:pPr><w:rPr><w:b/><w:color w:val="315B45"/><w:sz w:val="28"/></w:rPr></w:style>' +
+                '<w:style w:type="paragraph" w:styleId="Heading3"><w:name w:val="heading 3"/><w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:qFormat/><w:pPr><w:keepNext/><w:spacing w:before="220" w:after="120"/></w:pPr><w:rPr><w:b/><w:color w:val="394D40"/><w:sz w:val="24"/></w:rPr></w:style>' +
+                '</w:styles>';
+            const body = markdownToDocumentXml(text, compactSpacing);
+            const documentXml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+                '<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">' +
+                '<w:body>' + body +
+                '<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="720" w:right="720" w:bottom="720" w:left="720" w:header="360" w:footer="360" w:gutter="0"/></w:sectPr>' +
+                '</w:body></w:document>';
+            return createZip([
+                { name: "[Content_Types].xml", data: contentTypes },
+                { name: "_rels/.rels", data: relationships },
+                { name: "word/_rels/document.xml.rels", data: documentRelationships },
+                { name: "word/document.xml", data: documentXml },
+                { name: "word/styles.xml", data: styles }
+            ]);
+        }
+
+        function showToast(message) {
+            toast.textContent = message;
+            toast.classList.add("show");
+            window.clearTimeout(toastTimer);
+            toastTimer = window.setTimeout(function () { toast.classList.remove("show"); }, 3200);
+        }
+
+        function safeFilename(value) {
+            const cleaned = value.trim().replace(/[<>:"/\\|?*\u0000-\u001F]/g, "-").replace(/[. ]+$/g, "");
+            return cleaned || "sened";
+        }
+
+        source.addEventListener("input", updatePreview);
+        removeBlankLines.addEventListener("change", updatePreview);
+        document.getElementById("download").addEventListener("click", function () {
+            if (!source.value.trim()) {
+                showToast("Endirməzdən əvvəl mətn əlavə edin.");
+                source.focus();
+                return;
+            }
+            try {
+                const blob = createDocx(source.value, removeBlankLines.checked);
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement("a");
+                link.href = url;
+                link.download = safeFilename(filename.value) + ".docx";
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+                window.setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+                showToast("Word sənədiniz endirilməyə hazırdır.");
+            } catch (error) {
+                console.error("Word sənədini yaratmaq mümkün olmadı.", error);
+                showToast("Sənəd yaradılmadı. Zəhmət olmasa yenidən cəhd edin.");
+            }
+        });
+        document.getElementById("sample-button").addEventListener("click", function () {
+            source.value = "### Başlıq\n\nMətninizi burada yazın. **Vacib sözləri qalın**, *digər sözləri kursiv* edin.\n\n### Siyahı\n\n* Birinci maddə\n* İkinci maddə";
+            filename.value = "Yeni-sened";
+            updatePreview();
+            source.focus();
+        });
+
+        updatePreview();
+    </script>
+</body>
+</html>
