@@ -4,7 +4,40 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#f5f4ef">
-    <title>Yazıdan Word-a — sənəd hazırlayıcı</title>
+    <meta name="description" content="Markdown mətnini səliqəli Word (DOCX) sənədinə çevirin. Canlı önbaxış, formatlama və pulsuz yükləmə — qeydiyyatsız, birbaşa cihazınızda.">
+    <meta name="robots" content="index, follow">
+    <meta property="og:type" content="website">
+    <meta property="og:locale" content="az_AZ">
+    <meta property="og:site_name" content="Yazıdan Word-a">
+    <meta property="og:title" content="Markdown-dan Word-a çevirici — Pulsuz DOCX">
+    <meta property="og:description" content="Markdown mətninizi formatlanmış Word sənədinə çevirin. Canlı önbaxış və pulsuz DOCX yükləmə.">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="Markdown-dan Word-a çevirici — Pulsuz DOCX">
+    <meta name="twitter:description" content="Markdown mətninizi formatlanmış Word sənədinə çevirin. Canlı önbaxış və pulsuz DOCX yükləmə.">
+    <title>Markdown-dan Word-a çevirici — Pulsuz DOCX sənəd hazırlayıcı</title>
+    <script type="application/ld+json">
+        {
+            "@context": "https://schema.org",
+            "@type": "WebApplication",
+            "name": "Yazıdan Word-a",
+            "description": "Markdown mətnini formatlanmış Word (DOCX) sənədinə çevirən pulsuz onlayn alət.",
+            "applicationCategory": "UtilitiesApplication",
+            "operatingSystem": "Any",
+            "browserRequirements": "Requires JavaScript",
+            "inLanguage": "az",
+            "offers": {
+                "@type": "Offer",
+                "price": "0",
+                "priceCurrency": "AZN"
+            },
+            "featureList": [
+                "Markdown mətnindən Word (DOCX) sənədi yaratmaq",
+                "Canlı sənəd önbaxışı",
+                "Başlıqlar, siyahılar, qalın və kursiv formatlama",
+                "Sənədi birbaşa cihaza yükləmək"
+            ]
+        }
+    </script>
     <style>
         :root {
             color-scheme: light;
@@ -246,6 +279,13 @@
         .document strong { font-weight: 700; }
         .document em { font-style: italic; }
         .empty-preview { color: #a2aaa4; font-family: "Segoe UI", Arial, sans-serif; font-size: 11px; text-align: center; }
+        .how-it-works { max-width: 780px; margin: 42px auto 0; color: #536159; font-size: 13px; line-height: 1.8; }
+        .how-it-works h2, .how-it-works h3 { color: var(--ink); font-family: Georgia, "Times New Roman", serif; font-weight: 500; line-height: 1.35; }
+        .how-it-works h2 { margin: 0 0 10px; font-size: 24px; }
+        .how-it-works h3 { margin: 24px 0 7px; font-size: 19px; }
+        .how-it-works p { margin: 0 0 10px; }
+        .how-it-works ol { margin: 10px 0 0; padding-left: 22px; }
+        .how-it-works li { margin-bottom: 5px; padding-left: 3px; }
         .sample-row { display: flex; align-items: center; gap: 9px; }
         .sample-button { padding: 5px 0; border: 0; background: transparent; color: var(--green); font-size: 10px; font-weight: 700; }
         .sample-button:hover { color: var(--green-dark); text-decoration: underline; }
@@ -301,14 +341,16 @@
                 <div class="brand-caption">Sadə mətndən səliqəli sənədə</div>
             </div>
         </div>
-        <div class="top-note"><span>100% pulsuz</span> · Məlumatlarınız cihazınızda qalır</div>
+        <div class="top-note">
+            <!-- <span>100% pulsuz</span> ·  -->
+            Məlumatlarınız cihazınızda qalır</div>
     </header>
 
     <main>
         <section class="intro">
             <div class="eyebrow">Onlayn sənəd redaktoru</div>
-            <h1>Mətninizi sənədə çevirin.</h1>
-            <p>Markdown formatında yazın, görünüşə nəzər salın və hazır Word sənədini endirin.</p>
+            <h1>Markdown mətnini Word sənədinə çevirin</h1>
+            <p>Mətni Markdown formatında yazın, canlı önbaxışa baxın və formatlanmış Word (DOCX) sənədini pulsuz endirin.</p>
         </section>
 
         <section class="workspace" aria-label="Mətn redaktoru və sənəd önbaxışı">
@@ -370,6 +412,18 @@ Həyat sığortasının əsas növləri:
                     <article class="document" id="preview" aria-label="Formatlanmış sənəd önbaxışı"></article>
                 </div>
             </div>
+        </section>
+
+        <section class="how-it-works" aria-labelledby="how-it-works-title">
+            <h2 id="how-it-works-title">Markdown-dan Word sənədi necə yaradılır?</h2>
+            <p>Bu pulsuz onlayn Markdown–Word çeviricisi mətni səliqəli, redaktə edilə bilən DOCX sənədinə çevirir. Başlıqlar, abzaslar, siyahılar və vurğulanmış mətn Word faylında da qorunur.</p>
+            <ol>
+                <li>Mətninizi redaktora daxil edin və Markdown işarələrindən istifadə edərək formatlayın.</li>
+                <li>Sağ tərəfdə canlı sənəd önbaxışını yoxlayın və istəyə görə abzas aralığını tənzimləyin.</li>
+                <li><strong>Word sənədini endir</strong> düyməsinə basaraq DOCX faylını cihazınıza yükləyin.</li>
+            </ol>
+            <h3>Mətn və məxfilik</h3>
+            <p>Sənəd brauzerinizdə yaradılır. Mətniniz serverə göndərilmir; yüklənmiş DOCX faylını Microsoft Word və uyğun mətn redaktorlarında aça bilərsiniz.</p>
         </section>
     </main>
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
