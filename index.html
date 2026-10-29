@@ -887,66 +887,71 @@
       }
 
       function xmlEscape(text) {
-        return text.replace(/[&<>"']/g, function (character) {
-          return {
-            "&": "&amp;",
-            "<": "&lt;",
-            ">": "&gt;",
-            '"': "&quot;",
-            "'": "&apos;",
-          }[character];
-        });
+        return text
+          .replace(/[\u0000-\u0008\u000C\u000E-\u001F]/g, "")
+          .replace(/[&<>"']/g, function (character) {
+            return {
+              "&": "&amp;",
+              "<": "&lt;",
+              ">": "&gt;",
+              '"': "&quot;",
+              "'": "&apos;",
+            }[character];
+          });
       }
 
       function paragraphXml(text, options) {
         const settings = options || {};
         const runs = [];
+        const runFontSize = settings.style ? null : 20;
         const pattern =
           /(\*\*|__)(.+?)\1|(?<!\*)\*([^*\n]+)\*(?!\*)|(?<!_)_([^_\n]+)_(?!_)/g;
         let position = 0;
         let match;
         while ((match = pattern.exec(text)) !== null) {
           if (match.index > position) {
-            runs.push(runXml(text.slice(position, match.index), false, false));
+            runs.push(
+              runXml(text.slice(position, match.index), false, false, runFontSize),
+            );
           }
           const strong = Boolean(match[2]);
           const value = match[2] || match[3] || match[4];
-          runs.push(runXml(value, strong, !strong));
+          runs.push(runXml(value, strong, !strong, runFontSize));
           position = pattern.lastIndex;
         }
         if (position < text.length || runs.length === 0) {
-          runs.push(runXml(text.slice(position), false, false));
+          runs.push(runXml(text.slice(position), false, false, runFontSize));
         }
 
         let pPr = "";
-        const lineSpacing = 276;
+        const lineSpacing = settings.compactSpacing ? 240 : 360;
         if (settings.style) {
           const headingLevel = Number(settings.style.slice(-1));
-          const before = [0, 0, 100, 100][headingLevel];
+          const before = [0, 0, 100, 0][headingLevel];
           pPr =
             '<w:pPr><w:pStyle w:val="' +
             settings.style +
-            '"/>' +
-            (headingLevel === 1 ? '<w:jc w:val="center"/>' : "") +
-            '<w:spacing w:before="' +
+            '"/><w:spacing w:before="' +
             before +
-            '" w:after="0" w:line="' +
+            '" w:after="60" w:line="' +
             lineSpacing +
-            '" w:lineRule="auto"/></w:pPr>';
+            '" w:lineRule="auto"/>' +
+            (headingLevel === 1 ? '<w:jc w:val="center"/>' : "") +
+            "</w:pPr>";
         } else if (settings.bullet) {
           pPr =
-            '<w:pPr><w:ind w:left="720" w:hanging="360"/><w:spacing w:after="' +
-            (settings.compactSpacing ? 0 : 60) +
+            '<w:pPr><w:spacing w:after="' +
+            (settings.compactSpacing ? 60 : 120) +
             '" w:line="' +
             lineSpacing +
-            '" w:lineRule="auto"/></w:pPr>';
+            '" w:lineRule="auto"/><w:ind w:left="720" w:hanging="360"/></w:pPr>';
           runs.unshift(
             '<w:r><w:rPr><w:rFonts w:ascii="Arial" w:hAnsi="Arial"/><w:color w:val="2F674F"/></w:rPr><w:t xml:space="preserve">•  </w:t></w:r>',
           );
         } else {
           pPr =
             '<w:pPr><w:spacing w:after="' +
-            (settings.compactSpacing ? 0 : 60) +
+            (settings.compactSpacing ? 60 : 180) +
             '" w:line="' +
             lineSpacing +
             '" w:lineRule="auto"/></w:pPr>';
@@ -954,16 +959,25 @@
         return "<w:p>" + pPr + runs.join("") + "</w:p>";
       }
 
-      function runXml(text, bold, italic) {
+      function runXml(text, bold, italic, fontSize) {
         let properties =
-          '<w:rFonts w:ascii="Arial" w:hAnsi="Arial" w:eastAsia="Arial"/><w:sz w:val="20"/><w:szCs w:val="20"/>';
+          '<w:rFonts w:ascii="Arial" w:hAnsi="Arial" w:eastAsia="Arial"/>';
         if (bold) properties += "<w:b/>";
         if (italic) properties += "<w:i/>";
+        if (fontSize !== null) {
+          const size = fontSize === undefined ? 20 : fontSize;
+          properties +=
+            '<w:sz w:val="' + size + '"/><w:szCs w:val="' + size + '"/>';
+        }
+        const content = text
+          .split("\u000B")
+          .map(xmlEscape)
+          .join('</w:t><w:br/><w:t xml:space="preserve">');
         return (
           "<w:r><w:rPr>" +
           properties +
           '</w:rPr><w:t xml:space="preserve">' +
-          xmlEscape(text) +
+          content +
           "</w:t></w:r>"
         );
       }
@@ -1131,11 +1145,11 @@
           '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
           '<w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">' +
           '<w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="Arial" w:hAnsi="Arial" w:eastAsia="Arial"/><w:sz w:val="20"/></w:rPr></w:rPrDefault>' +
-          '<w:pPrDefault><w:pPr><w:spacing w:after="60" w:line="276" w:lineRule="auto"/></w:pPr></w:pPrDefault></w:docDefaults>' +
-          '<w:style w:type="paragraph" w:styleId="Normal"><w:name w:val="Normal"/><w:qFormat/><w:rPr><w:rFonts w:ascii="Arial" w:hAnsi="Arial"/><w:sz w:val="20"/></w:rPr></w:style>' +
-          '<w:style w:type="paragraph" w:styleId="Heading1"><w:name w:val="heading 1"/><w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:qFormat/><w:pPr><w:keepNext/><w:keepLines/></w:pPr><w:rPr><w:rFonts w:ascii="Arial" w:hAnsi="Arial"/><w:b/><w:color w:val="17365D"/><w:sz w:val="28"/><w:szCs w:val="28"/></w:rPr></w:style>' +
-          '<w:style w:type="paragraph" w:styleId="Heading2"><w:name w:val="heading 2"/><w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:qFormat/><w:pPr><w:keepNext/><w:keepLines/></w:pPr><w:rPr><w:rFonts w:ascii="Arial" w:hAnsi="Arial"/><w:b/><w:color w:val="365F91"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr></w:style>' +
-          '<w:style w:type="paragraph" w:styleId="Heading3"><w:name w:val="heading 3"/><w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:qFormat/><w:pPr><w:keepNext/><w:keepLines/></w:pPr><w:rPr><w:rFonts w:ascii="Arial" w:hAnsi="Arial"/><w:b/><w:color w:val="4F81BD"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr></w:style>' +
+          '<w:pPrDefault><w:pPr><w:spacing w:after="60" w:line="240" w:lineRule="auto"/></w:pPr></w:pPrDefault></w:docDefaults>' +
+          '<w:style w:type="paragraph" w:styleId="Normal"><w:name w:val="Normal"/><w:qFormat/><w:pPr><w:spacing w:after="60" w:line="240" w:lineRule="auto"/></w:pPr><w:rPr><w:rFonts w:ascii="Arial" w:hAnsi="Arial"/><w:sz w:val="20"/></w:rPr></w:style>' +
+          '<w:style w:type="paragraph" w:styleId="Heading1"><w:name w:val="heading 1"/><w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:qFormat/><w:pPr><w:keepNext/><w:keepLines/></w:pPr><w:rPr><w:rFonts w:ascii="Arial" w:hAnsi="Arial"/><w:b/><w:color w:val="000000"/><w:sz w:val="28"/><w:szCs w:val="28"/></w:rPr></w:style>' +
+          '<w:style w:type="paragraph" w:styleId="Heading2"><w:name w:val="heading 2"/><w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:qFormat/><w:pPr><w:keepNext/><w:keepLines/></w:pPr><w:rPr><w:rFonts w:ascii="Arial" w:hAnsi="Arial"/><w:b/><w:color w:val="000000"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr></w:style>' +
+          '<w:style w:type="paragraph" w:styleId="Heading3"><w:name w:val="heading 3"/><w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:qFormat/><w:pPr><w:keepNext/><w:keepLines/></w:pPr><w:rPr><w:rFonts w:ascii="Arial" w:hAnsi="Arial"/><w:b/><w:color w:val="000000"/><w:sz w:val="20"/><w:szCs w:val="20"/></w:rPr></w:style>' +
           "</w:styles>";
         const body = markdownToDocumentXml(text, compactSpacing);
         const documentXml =
