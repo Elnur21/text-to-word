@@ -449,6 +449,9 @@
       .document.compact-spacing h1 {
         margin-bottom: 0;
       }
+      .document.compact-spacing {
+        line-height: 1.25;
+      }
       .document.compact-spacing h2 {
         margin-top: 6px;
         margin-bottom: 0;
@@ -693,8 +696,8 @@
                   >Abzaslar arasındakı əlavə boşluğu sil</span
                 >
                 <span class="option-description"
-                  >Seçildikdə, abzaslar arasında əlavə boş sətir
-                  saxlanmır.</span
+                  >Seçildikdə, abzaslar arasındakı boşluq və sətir məsafəsi
+                  azaldılır.</span
                 >
               </span>
             </label>
@@ -916,6 +919,7 @@
         }
 
         let pPr = "";
+        const lineSpacing = settings.compactSpacing ? 240 : 360;
         if (settings.style) {
           const headingLevel = Number(settings.style.slice(-1));
           const before = settings.compactSpacing
@@ -931,12 +935,16 @@
             before +
             '" w:after="' +
             after +
-            '"/></w:pPr>';
+            '" w:line="' +
+            lineSpacing +
+            '" w:lineRule="auto"/></w:pPr>';
         } else if (settings.bullet) {
           pPr =
             '<w:pPr><w:ind w:left="720" w:hanging="360"/><w:spacing w:after="' +
             (settings.compactSpacing ? 0 : 120) +
-            '"/></w:pPr>';
+            '" w:line="' +
+            lineSpacing +
+            '" w:lineRule="auto"/></w:pPr>';
           runs.unshift(
             '<w:r><w:rPr><w:rFonts w:ascii="Arial" w:hAnsi="Arial"/><w:color w:val="2F674F"/></w:rPr><w:t xml:space="preserve">•  </w:t></w:r>',
           );
@@ -944,7 +952,9 @@
           pPr =
             '<w:pPr><w:spacing w:after="' +
             (settings.compactSpacing ? 0 : 180) +
-            '" w:line="360" w:lineRule="auto"/></w:pPr>';
+            '" w:line="' +
+            lineSpacing +
+            '" w:lineRule="auto"/></w:pPr>';
         }
         return "<w:p>" + pPr + runs.join("") + "</w:p>";
       }
